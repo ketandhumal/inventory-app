@@ -33,6 +33,7 @@ jobs:
 
     # 4. Build Spring Boot project
     - name: Build with Maven
+      working-directory: backend
       run: mvn clean package
 
     # 5. Archive the generated JAR
