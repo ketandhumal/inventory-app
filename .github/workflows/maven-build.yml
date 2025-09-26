@@ -41,4 +41,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: springboot-jar
-        path: target/*.jar
+        path: backend/target/*.jar
