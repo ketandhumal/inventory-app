@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api'; 
 
 function ProductForm({ onAdded }) {
   const [form, setForm] = useState({ name: '', description: '', price: '', quantity: '', image: null });
@@ -22,9 +22,7 @@ function ProductForm({ onAdded }) {
       data.append('quantity', form.quantity || 0);
       if (form.image) data.append('image', form.image);
 
-      await axios.post('http://localhost:8080/api/products', data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await api.post('/', data); // uses api.js instance
 
       setForm({ name: '', description: '', price: '', quantity: '', image: null });
       onAdded();
