@@ -31,31 +31,23 @@ function ProductForm({ onAdded }) {
       data.append('price', form.price || 0);
       data.append('quantity', form.quantity || 0);
 
-      if (form.image) {
-        data.append('image', form.image);
-      }
+      if (form.image) data.append('image', form.image);
 
       await api.post('/', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      // Reset form
       setForm({ name: '', description: '', price: '', quantity: '', image: null });
       onAdded();
     } catch (err) {
       if (err.response) {
-        // Backend responded with status outside 2xx
-        console.error('Backend error:', err.response.data);
         alert(`Backend error: ${err.response.data}`);
       } else if (err.request) {
-        // No response received
-        console.error('No response from server:', err.request);
         alert('No response from server. Please check your backend.');
       } else {
-        // Error setting up request
-        console.error('Request error:', err.message);
         alert(`Request error: ${err.message}`);
       }
+      console.error(err);
     } finally {
       setLoading(false);
     }

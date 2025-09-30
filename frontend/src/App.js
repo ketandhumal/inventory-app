@@ -5,13 +5,18 @@ import api from './api';
 
 function App() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchProducts = async () => {
+    setLoading(true);
     try {
       const res = await api.get('/');
       setProducts(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching products:', err);
+      alert('Failed to fetch products from server.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -22,8 +27,12 @@ function App() {
   return (
     <div className="container mt-4">
       <h2>Inventory Management</h2>
-      <ProductForm onAdded={fetchProducts} /> {/* api is imported inside ProductForm */}
-      <ProductList products={products} />
+      <ProductForm onAdded={fetchProducts} />
+      {loading ? (
+        <p>Loading products...</p>
+      ) : (
+        <ProductList products={products} />
+      )}
     </div>
   );
 }
