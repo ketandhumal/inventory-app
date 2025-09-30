@@ -31,7 +31,6 @@ function ProductForm({ onAdded }) {
       data.append('price', form.price || 0);
       data.append('quantity', form.quantity || 0);
 
-      // Only append image if selected
       if (form.image) {
         data.append('image', form.image);
       }
@@ -44,8 +43,19 @@ function ProductForm({ onAdded }) {
       setForm({ name: '', description: '', price: '', quantity: '', image: null });
       onAdded();
     } catch (err) {
-      console.error('Error adding product:', err);
-      alert('Error adding product');
+      if (err.response) {
+        // Backend responded with status outside 2xx
+        console.error('Backend error:', err.response.data);
+        alert(`Backend error: ${err.response.data}`);
+      } else if (err.request) {
+        // No response received
+        console.error('No response from server:', err.request);
+        alert('No response from server. Please check your backend.');
+      } else {
+        // Error setting up request
+        console.error('Request error:', err.message);
+        alert(`Request error: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
