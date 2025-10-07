@@ -1,5 +1,8 @@
 com\inventory\InventoryAppApplication.class
 com\inventory\service\ProductService.class
 com\inventory\repository\ProductRepository.class
+com\inventory\config\CorsConfig.class
 com\inventory\controller\ProductController.class
 com\inventory\model\Product.class
+com\inventory\service\S3Service.class
+com\inventory\config\CorsConfig$1.class
