@@ -10,7 +10,7 @@ function App() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/');
+      const res = await api.get('');
       setProducts(res.data);
     } catch (err) {
       console.error('Error fetching products:', err);

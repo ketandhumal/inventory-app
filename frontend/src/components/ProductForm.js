@@ -33,21 +33,28 @@ function ProductForm({ onAdded }) {
 
       if (form.image) data.append('image', form.image);
 
-      await api.post('/', data, {
+      await api.post('', data, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       setForm({ name: '', description: '', price: '', quantity: '', image: null });
       onAdded();
     } catch (err) {
+      console.error("Axios error:", err);
       if (err.response) {
-        alert(`Backend error: ${err.response.data}`);
+        console.error("Response data:", err.response.data);
+        console.error("Response status:", err.response.status);
+
+        // Show meaningful message
+        let message = err.response.data?.message || JSON.stringify(err.response.data);
+        alert(`Backend error (${err.response.status}): ${message}`);
       } else if (err.request) {
+        console.error("No response from server:", err.request);
         alert('No response from server. Please check your backend.');
       } else {
+        console.error("Request error:", err.message);
         alert(`Request error: ${err.message}`);
       }
-      console.error(err);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import React from 'react';
-import api from '../api'; 
+
 function ProductList({ products }) {
   return (
     <div className="table-responsive">
@@ -22,7 +22,7 @@ function ProductList({ products }) {
               <td>{p.quantity}</td>
               <td>
                 {p.imageUrl ? (
-                  <img src={`${api.defaults.baseURL}/uploads/${p.imageUrl}`} alt={p.name} style={{ width: 60 }} />
+                  <img src={p.imageUrl} alt={p.name} style={{ width: 60 }} />
                 ) : '—'}
               </td>
             </tr>
