@@ -1,4 +1,4 @@
-# Inventory App (Backend + Frontend)
+# Inventory App (Backend + Frontend) with MySQL
 
 ## Backend (Spring boot)
 - Java 17, Spring Boot 3.x, Maven
