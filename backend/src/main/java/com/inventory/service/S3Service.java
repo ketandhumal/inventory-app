@@ -1,38 +1,32 @@
-package com.inventory.service;
+import java.io.IOException;
+import java.nio.file.Path;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 @Service
 public class S3Service {
 
     private final S3Client s3Client;
-    private final String region; 
 
-    @Value("${aws.s3.bucket-name}")
-    private String bucketName;
+    private final String bucketName;
+    private final String region;
 
-    public S3Service(@Value("${aws.region}") String region,
-                     @Value("${aws.access-key}") String accessKey,
-                     @Value("${aws.secret-key}") String secretKey) {
+    // Inject values from Spring config
+    public S3Service(@Value("${aws.s3.bucket-name}") String bucketName,
+                     @Value("${aws.region}") String region) {
+        this.bucketName = bucketName;
         this.region = region;
-
-        s3Client = S3Client.builder()
+        this.s3Client = S3Client.builder()
                 .region(Region.of(region))
-                .credentialsProvider(
-                        StaticCredentialsProvider.create(
-                                AwsBasicCredentials.create(accessKey, secretKey)
-                        )
-                ).build();
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
+                .build();
     }
 
     public String uploadFile(String keyName, Path filePath) throws IOException {
@@ -40,11 +34,10 @@ public class S3Service {
             s3Client.putObject(PutObjectRequest.builder()
                             .bucket(bucketName)
                             .key(keyName)
-                            .acl("public-read")
                             .build(),
                     filePath);
         } catch (S3Exception e) {
-            throw new IOException("S3 Upload failed: " + e.awsErrorDetails().errorMessage());
+            throw new IOException("S3 Upload failed: " + e.awsErrorDetails().errorMessage(), e);
         }
         return getFileUrl(keyName);
     }

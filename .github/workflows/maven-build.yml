@@ -37,6 +37,7 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+
     # Step 6: Login to Amazon ECR
     - name: Login to Amazon ECR
       id: login-ecr
@@ -46,13 +47,14 @@ jobs:
     - name: Build Docker image
       run: docker build -t inventory-app ./backend
 
-    # Step 8: Tag Docker image for ECR (latest)
+    # Step 8: Tag Docker image for ECR 
     - name: Tag Docker image for ECR (latest)
       run: docker tag inventory-app ${{ secrets.ECR_REPOSITORY }}:latest
 
-    # Step 9: Push Docker image to Amazon ECR (latest)
+    # Step 9: Push Docker image to Amazon ECR 
     - name: Push Docker image to Amazon ECR (latest)
       run: docker push ${{ secrets.ECR_REPOSITORY }}:latest
+
 
   deploy-to-ECS:
     needs: build-and-push-to-ECR
