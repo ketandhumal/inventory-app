@@ -1,6 +1,6 @@
 # Inventory App (Backend + Frontend)
 
-## Backend (Spring Boot)
+## Backend (Spring boot)
 - Java 17, Spring Boot 3.x, Maven
 - MySQL database (create `inventory_db` database)
 - Update src/main/resources/application.properties with your DB credentials
