@@ -6,6 +6,8 @@ on:
 jobs:
   build-and-push-to-ECR:
     runs-on: ubuntu-latest
+    outputs:
+      IMAGE_URI: ${{ steps.set-image-uri.outputs.image-uri }}
 
     steps:
     # Step 1: Checkout code
@@ -44,9 +46,10 @@ jobs:
 
     # Step 7: Build, tag, and push image to ECR
     - name: Build, Tag, and Push Docker image
+      id: set-image-uri
       run: |
         IMAGE_URI=${{ secrets.ECR_REPOSITORY }}
-
+        
         echo "Building Docker image..."
         docker build -t inventory-app ./backend
 
@@ -58,11 +61,15 @@ jobs:
         docker push $IMAGE_URI:${{ github.sha }}
         docker push $IMAGE_URI:latest
 
+        # Set the output for the next job
+        echo "image-uri=$IMAGE_URI:${{ github.sha }}" >> $GITHUB_OUTPUT
 
 
   deploy-to-ECS:
     needs: build-and-push-to-ECR
     runs-on: ubuntu-latest
+    env:
+      IMAGE_URI: ${{ needs.build-and-push-to-ECR.outputs.IMAGE_URI }}
 
     steps:
     # Step 1: Configure AWS credentials
@@ -91,7 +98,6 @@ jobs:
           memory: memory
           }" > task-definition.json
 
-
     # Step 3: Update image URI in task definition with new SHA tag
     - name: Update ECS task definition image
       run: |
@@ -114,5 +120,3 @@ jobs:
           --task-definition $TASK_DEF_ARN \
           --force-new-deployment \
           --region ${{ secrets.AWS_REGION }}
-
-        
