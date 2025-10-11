@@ -49,16 +49,9 @@ jobs:
     # Step 8: Tag and Push Docker image to Amazon ECR
     - name: Tag and Push Docker image to Amazon ECR
       run: |
-        IMAGE_URI=${{ secrets.ECR_REPOSITORY }}
-
-        docker tag inventory-app $IMAGE_URI:latest
-        docker tag inventory-app $IMAGE_URI:${{ github.sha }}
-
-        docker push $IMAGE_URI:latest
-        docker push $IMAGE_URI:${{ github.sha }}
-
-        echo "Pushed: $IMAGE_URI:${{ github.sha }}
-
+        docker tag inventory-app ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+        docker push ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+       
 
   deploy-to-ECS:
     needs: build-and-push-to-ECR
