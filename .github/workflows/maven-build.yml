@@ -37,7 +37,6 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-
     # Step 6: Login to Amazon ECR
     - name: Login to Amazon ECR
       id: login-ecr
@@ -47,18 +46,24 @@ jobs:
     - name: Build Docker image
       run: docker build -t inventory-app ./backend
 
-    # Step 8: Tag Docker image for ECR 
-    - name: Tag Docker image for ECR (latest)
-      run: docker tag inventory-app ${{ secrets.ECR_REPOSITORY }}:latest
+    # Step 8: Tag and Push Docker image to Amazon ECR
+    - name: Tag and Push Docker image to Amazon ECR
+      run: |
+        IMAGE_URI=${{ secrets.ECR_REPOSITORY }}
 
-    # Step 9: Push Docker image to Amazon ECR 
-    - name: Push Docker image to Amazon ECR (latest)
-      run: docker push ${{ secrets.ECR_REPOSITORY }}:latest
+        docker tag inventory-app $IMAGE_URI:latest
+        docker tag inventory-app $IMAGE_URI:${{ github.sha }}
+
+        docker push $IMAGE_URI:latest
+        docker push $IMAGE_URI:${{ github.sha }}
+
+        echo "Pushed: $IMAGE_URI:${{ github.sha }}”
 
 
   deploy-to-ECS:
     needs: build-and-push-to-ECR
     runs-on: ubuntu-latest
+
     steps:
     # Step 1: Configure AWS credentials
     - name: Configure AWS credentials
@@ -68,13 +73,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # Step 2: Update ECS service to use latest image
-    - name: Update ECS service to use latest image
+    # Step 2: Update ECS service to use new image tag
+    - name: Update ECS service with new image
       run: |
         aws ecs update-service \
           --cluster inventory-cluster \
           --service inventory-backend-service \
           --force-new-deployment \
           --region ${{ secrets.AWS_REGION }}
-
-    
