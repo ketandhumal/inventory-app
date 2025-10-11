@@ -77,7 +77,7 @@ jobs:
     - name: Download current ECS task definition
       run: |
         aws ecs describe-task-definition \
-          --task-definition inventory-task-def \
+          --task-definition inventory-backend-task \
           --query taskDefinition > task-definition.json
 
     # Step 3: Update image URI in task definition with new SHA tag
