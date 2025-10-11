@@ -91,7 +91,7 @@ jobs:
             memory: memory
           }" > task-definition.json
 
-    # Step 3 : Update image, register task definition, and deploy in one step
+    # Step 3 : Update image, register task definition, and deploy 
     - name: Update ECS task definition image and deploy
       run: |
         # Update image URI in task definition
