@@ -73,12 +73,24 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # Step 2: Download existing ECS task definition
-    - name: Download current ECS task definition
+    # Step 2: Download existing ECS task definition (clean version)
+    - name: Download and clean ECS task definition
       run: |
         aws ecs describe-task-definition \
-          --task-definition inventory-backend-task \
-          --query taskDefinition > task-definition.json
+        --task-definition inventory-backend-task \
+        --query "taskDefinition | {
+          family: family,
+          taskRoleArn: taskRoleArn,
+          executionRoleArn: executionRoleArn,
+          networkMode: networkMode,
+          containerDefinitions: containerDefinitions,
+          volumes: volumes,
+          placementConstraints: placementConstraints,
+          requiresCompatibilities: requiresCompatibilities,
+          cpu: cpu,
+          memory: memory
+          }" > task-definition.json
+
 
     # Step 3: Update image URI in task definition with new SHA tag
     - name: Update ECS task definition image
