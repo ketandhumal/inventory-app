@@ -74,7 +74,7 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     # Step 2: Download existing ECS task definition (clean version)
-    - name: Download and clean ECS task definition
+    - name: Download ECS task definition
       run: |
         aws ecs describe-task-definition \
           --task-definition inventory-backend-task \
@@ -91,22 +91,21 @@ jobs:
             memory: memory
           }" > task-definition.json
 
-    # Step 3: Update image URI in task definition with new SHA tag
-    - name: Update ECS task definition image
+    # Step 3 : Update image, register task definition, and deploy in one step
+    - name: Update ECS task definition image and deploy
       run: |
+        # Update image URI in task definition
         jq --arg IMAGE "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE' task-definition.json > new-task-definition.json
 
-    # Step 4: Register new ECS task definition revision
-    - name: Register new ECS task definition
-      run: |
+        # Register new task definition and capture ARN
         TASK_DEF_ARN=$(aws ecs register-task-definition \
           --cli-input-json file://new-task-definition.json \
           --query "taskDefinition.taskDefinitionArn" \
           --output text)
 
-    # Step 5: Deploy the new revision to ECS
-    - name: Deploy new revision to ECS service
-      run: |
+        echo "Registered new task definition ARN: $TASK_DEF_ARN"
+
+        # Deploy new task definition to ECS service
         aws ecs update-service \
           --cluster inventory-cluster \
           --service inventory-backend-service \
