@@ -57,7 +57,7 @@ jobs:
         docker push $IMAGE_URI:latest
         docker push $IMAGE_URI:${{ github.sha }}
 
-        echo "Pushed: $IMAGE_URI:${{ github.sha }}”
+        echo "Pushed: $IMAGE_URI:${{ github.sha }}
 
 
   deploy-to-ECS:
