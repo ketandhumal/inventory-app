@@ -23,4 +23,3 @@ EXPOSE 5000
 
 # Run the app using 'serve' 
 CMD [ "serve", "-s", "build", "-l", "5000" ]
-

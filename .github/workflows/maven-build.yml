@@ -12,15 +12,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Step 2: Set up JDK 17 for Maven
+    # Step 2: Set up JDK 17
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         distribution: temurin
         java-version: 17
 
-    # Step 3: Build backend with Maven
-    - name: Build backend JAR
+    # Step 3: Build backend JAR
+    - name: Build backend with Maven
       working-directory: ./backend
       run: mvn clean package -DskipTests
 
@@ -37,28 +37,33 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-
     # Step 6: Login to Amazon ECR
     - name: Login to Amazon ECR
-      id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    # Step 7: Build Docker image
-    - name: Build Docker image
-      run: docker build -t inventory-app ./backend
+    # Step 7: Build, tag, and push image to ECR
+    - name: Build, Tag, and Push Docker image
+      run: |
+        IMAGE_URI=${{ secrets.ECR_REPOSITORY }}
 
-    # Step 8: Tag Docker image for ECR 
-    - name: Tag Docker image for ECR (latest)
-      run: docker tag inventory-app ${{ secrets.ECR_REPOSITORY }}:latest
+        echo "Building Docker image..."
+        docker build -t inventory-app ./backend
 
-    # Step 9: Push Docker image to Amazon ECR 
-    - name: Push Docker image to Amazon ECR (latest)
-      run: docker push ${{ secrets.ECR_REPOSITORY }}:latest
+        echo "Tagging Docker image..."
+        docker tag inventory-app $IMAGE_URI:${{ github.sha }}
+        docker tag inventory-app $IMAGE_URI:latest
+
+        echo "Pushing Docker image to ECR..."
+        docker push $IMAGE_URI:${{ github.sha }}
+        docker push $IMAGE_URI:latest
 
 
   deploy-to-ECS:
     needs: build-and-push-to-ECR
     runs-on: ubuntu-latest
+    env:
+      IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+
     steps:
     # Step 1: Configure AWS credentials
     - name: Configure AWS credentials
@@ -68,13 +73,42 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # Step 2: Update ECS service to use latest image
-    - name: Update ECS service to use latest image
+    # Step 2: Download existing ECS task definition (clean version)
+    - name: Download ECS task definition
       run: |
+        aws ecs describe-task-definition \
+          --task-definition inventory-backend-task \
+          --query "taskDefinition | {
+            family: family,
+            taskRoleArn: taskRoleArn,
+            executionRoleArn: executionRoleArn,
+            networkMode: networkMode,
+            containerDefinitions: containerDefinitions,
+            volumes: volumes,
+            placementConstraints: placementConstraints,
+            requiresCompatibilities: requiresCompatibilities,
+            cpu: cpu,
+            memory: memory
+          }" > task-definition.json
+
+    # Step 3 : Update image, register task definition, and deploy 
+    - name: Update ECS task definition image and deploy
+      run: |
+        # Update image URI in task definition
+        jq --arg IMAGE "$IMAGE_URI" '.containerDefinitions[0].image = $IMAGE' task-definition.json > new-task-definition.json
+
+        # Register new task definition and capture ARN
+        TASK_DEF_ARN=$(aws ecs register-task-definition \
+          --cli-input-json file://new-task-definition.json \
+          --query "taskDefinition.taskDefinitionArn" \
+          --output text)
+
+        echo "Registered new task definition ARN: $TASK_DEF_ARN"
+
+        # Deploy new task definition to ECS service
         aws ecs update-service \
           --cluster inventory-cluster \
           --service inventory-backend-service \
+          --task-definition $TASK_DEF_ARN \
           --force-new-deployment \
           --region ${{ secrets.AWS_REGION }}
-
-    

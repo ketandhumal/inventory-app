@@ -1,0 +1,25 @@
+version: "3.10"
+
+services:
+  backend:
+    build:
+      dockerfile: Dockerfile
+    container_name: inventory-app-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel --no-autoupdate run --token ${TOKEN}
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
